@@ -305,3 +305,8 @@
   ['pointerdown','touchstart','keydown','wheel','scroll','click'].forEach(function(n){addEventListener(n,kick,{passive:true})});
   vs.forEach(function(v){v.addEventListener('loadeddata',kick);v.addEventListener('canplay',kick)});
 })();
+
+/* Video 2 sn içinde başlamadıysa poster'ı hareketlendir; başlarsa geri al */
+(function(){var h=document.querySelector('#hmedia .hv'),m=document.getElementById('hmedia');if(!h||!m)return;
+function chk(){m.classList.toggle('hv-still',h.paused||h.readyState<2)}
+setTimeout(chk,2000);setTimeout(chk,5000);h.addEventListener('playing',function(){m.classList.remove('hv-still')})})();
