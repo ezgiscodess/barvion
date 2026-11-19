@@ -1924,3 +1924,4 @@ video{pointer-events:none}
 /* Video oynatılamıyorsa (Safari düşük güç): poster canlı kalsın */
 .hv-still .hv{animation:hvKb 16s ease-in-out infinite alternate}
 @keyframes hvKb{from{transform:scale(1.04) translate3d(0,0,0)}to{transform:scale(1.16) translate3d(-1.5%,-1%,0)}}
+.hv.vfb.on,img.vfb{display:block}img.vfb{object-fit:cover}

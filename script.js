@@ -310,3 +310,26 @@
 (function(){var h=document.querySelector('#hmedia .hv'),m=document.getElementById('hmedia');if(!h||!m)return;
 function chk(){m.classList.toggle('hv-still',h.paused||h.readyState<2)}
 setTimeout(chk,2000);setTimeout(chk,5000);h.addEventListener('playing',function(){m.classList.remove('hv-still')})})();
+
+/* Safari düşük güç modu: video otomatik oynatılamıyorsa, oynatma düğmesi yerine görüntü karelerini göster (hero: kare dizisi) */
+(function(){
+  var vs=[].slice.call(document.querySelectorAll('video'));if(!vs.length)return;
+  function src(v){var s=v.currentSrc||(v.querySelector('source')||{}).src||v.src||'';return s}
+  function fb(v){
+    if(v._fb)return;var s=src(v);if(!s)return;
+    var hero=v.classList.contains('hv'),img=document.createElement('img');
+    img.className=v.className+' vfb';img.alt='';img.setAttribute('aria-hidden','true');
+    img.decoding='async';
+    v.parentNode.insertBefore(img,v);v.style.display='none';v._fb=img;
+    if(hero){
+      var i=1,t;img.src='/video/frames/h001.jpg';
+      v._fbt=setInterval(function(){i=i%80+1;img.src='/video/frames/h'+('00'+i).slice(-3)+'.jpg'},125);
+      for(var k=2;k<=80;k++){(new Image).src='/video/frames/h'+('00'+k).slice(-3)+'.jpg'}
+    }else{img.src=s.replace(/\.mp4.*$/,'.jpg')}
+  }
+  function unfb(v){if(!v._fb)return;clearInterval(v._fbt);v._fb.remove();v._fb=null;v.style.display=''}
+  vs.forEach(function(v){v.addEventListener('playing',function(){unfb(v)})});
+  function check(){vs.forEach(function(v){if(v.paused&&!v._fb&&!document.hidden&&!v.ended)fb(v)})}
+  setTimeout(check,1800);setTimeout(check,4000);
+  vs.forEach(function(v){v.addEventListener('loadeddata',function(){setTimeout(check,1500)})});
+})();
