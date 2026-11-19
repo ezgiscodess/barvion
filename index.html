@@ -7,9 +7,11 @@
 <meta name="description" content="Fabrikanızdaki veriyi operasyona, operasyonu doğru kararlara dönüştürüyoruz.">
 
 <script>document.documentElement.className+=" js"</script>
+<style>html.bi-pre body>*:not(.bi){visibility:hidden}.bi{position:fixed;inset:0;z-index:9999;background:#000}</style>
+<script>try{var _t=+localStorage.getItem('bv-bi-t')||0;if(!(sessionStorage.getItem('bv-bi')||Date.now()-_t<432e5)&&!matchMedia('(prefers-reduced-motion:reduce)').matches)document.documentElement.classList.add('bi-pre')}catch(e){}</script>
 <link rel="stylesheet" href="/fonts/poppins-3016686f.css">
 <link rel="stylesheet" href="/fonts/lora-a4db5c61.css">
-<link rel="stylesheet" href="/style.css?v=mwncod7m">
+<link rel="stylesheet" href="/style.css?v=mwncpyqq">
 <link rel="stylesheet" href="/mallow-port.css">
 </head>
 <body class="">
@@ -18,10 +20,10 @@
 </svg>
 <div class="bi" id="bi" aria-hidden="true"><div class="bi__line"></div><div class="bi__glow"></div><div class="bi__word"><span style="--i:0">B</span><span style="--i:1">A</span><span style="--i:2">R</span><span style="--i:3">V</span><span style="--i:4">I</span><span style="--i:5">O</span><span style="--i:6">N</span><i class="bi__sweep"></i></div></div>
 <script>(function(){var d=document.documentElement,bi=document.getElementById('bi'),seen=0;try{var ts=+localStorage.getItem('bv-bi-t')||0;seen=sessionStorage.getItem('bv-bi')||(Date.now()-ts<432e5)}catch(e){}
-if(!bi)return;if(seen||matchMedia('(prefers-reduced-motion:reduce)').matches){bi.remove();return}
+if(!bi)return;if(seen||matchMedia('(prefers-reduced-motion:reduce)').matches){bi.remove();d.classList.remove('bi-pre');return}
 d.classList.add('bi-lock');try{sessionStorage.setItem('bv-bi','1');localStorage.setItem('bv-bi-t',Date.now())}catch(e){}
-function end(){if(!bi.parentNode)return;bi.classList.add('out');setTimeout(function(){bi.remove();d.classList.remove('bi-lock')},900)}
-var t=setTimeout(end,3300);bi.addEventListener('click',function(){clearTimeout(t);end()});setTimeout(function(){d.classList.remove('bi-lock')},5200)})()</script><a class="skip" href="#icerik">İçeriğe geç</a>
+function end(){if(!bi.parentNode)return;bi.classList.add('out');setTimeout(function(){bi.remove();d.classList.remove('bi-lock','bi-pre')},900)}
+var t=setTimeout(end,3300);bi.addEventListener('click',function(){clearTimeout(t);end()});setTimeout(function(){d.classList.remove('bi-lock','bi-pre')},5200)})()</script><a class="skip" href="#icerik">İçeriğe geç</a>
 
 <header class="header" id="header">
   <div class="bar">
@@ -270,6 +272,6 @@ var t=setTimeout(end,3300);bi.addEventListener('click',function(){clearTimeout(t
 </footer>
 
 
-<script src="/script.js?v=mwncod7m"></script>
+<script src="/script.js?v=mwncpyqq"></script>
 </body>
 </html>
