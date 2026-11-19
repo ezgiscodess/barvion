@@ -1917,3 +1917,6 @@ section#yaklasim.story,#gorunmeyen + section#yaklasim.story{background:radial-gr
   .story .steps li{min-width:0}.story .steps li button{padding-left:8px;padding-right:8px}
   .story .steps li button span{display:none}
 }
+/* Safari: otomatik oynatma engellenirse çıkan oynat düğmesini gizle */
+video::-webkit-media-controls,video::-webkit-media-controls-start-playback-button,video::-webkit-media-controls-overlay-play-button,video::-webkit-media-controls-panel{display:none!important;-webkit-appearance:none}
+video{pointer-events:none}
