@@ -1,0 +1,6 @@
+[build]
+builder = "NIXPACKS"
+buildCommand = "echo static"
+[deploy]
+startCommand = "node server.mjs"
+healthcheckPath = "/"

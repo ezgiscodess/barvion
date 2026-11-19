@@ -1,12 +1,15 @@
 {
-  "name": "barvion-premium-3d-showcase",
+  "name": "barvion-group-site",
   "private": true,
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --config premium/vite.config.ts --host 127.0.0.1",
-    "build": "tsc -p premium/tsconfig.json && vite build --config premium/vite.config.ts",
-    "preview": "vite preview --config premium/vite.config.ts --host 127.0.0.1",
+    "start": "node server.mjs",
+    "build": "echo \"statik site: build gerekmez\"",
+    "site:build": "node build.mjs",
+    "premium:dev": "vite --config premium/vite.config.ts --host 127.0.0.1",
+    "premium:build": "tsc -p premium/tsconfig.json && vite build --config premium/vite.config.ts",
+    "premium:preview": "vite preview --config premium/vite.config.ts --host 127.0.0.1",
     "typecheck": "tsc -p premium/tsconfig.json --noEmit"
   },
   "dependencies": {
