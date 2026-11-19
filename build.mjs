@@ -230,7 +230,7 @@ const head = (title, desc, home) => `<!doctype html>
 
 <script>document.documentElement.className+=" js"</script>${home ? `
 <style>html.bi-pre body>*:not(.bi){visibility:hidden}.bi{position:fixed;inset:0;z-index:9999;background:#000}</style>
-<script>try{var _t=+localStorage.getItem('bv-bi-t')||0;if(!(sessionStorage.getItem('bv-bi')||Date.now()-_t<432e5)&&!matchMedia('(prefers-reduced-motion:reduce)').matches)document.documentElement.classList.add('bi-pre')}catch(e){}</script>` : ''}
+<script>try{if(!sessionStorage.getItem('bv-bi'))document.documentElement.classList.add('bi-pre')}catch(e){}</script>` : ''}
 <link rel="stylesheet" href="/fonts/poppins-3016686f.css">
 <link rel="stylesheet" href="/fonts/lora-a4db5c61.css">
 <link rel="stylesheet" href="/style.css?v=${BUILD}">
@@ -263,9 +263,9 @@ const write = (rel, html) => {
 const renumber = (html, home) => { let n = 0; return html.replace(/(<p class="label[^"]*"[^>]*>)\d\d — /g, (m, pre) => home ? `${pre}${String(++n).padStart(2, '0')} — ` : pre) }
 
 const INTRO = `<div class="bi" id="bi" aria-hidden="true"><div class="bi__line"></div><div class="bi__glow"></div><div class="bi__word">${[...'BARVION'].map((c, i) => `<span style="--i:${i}">${c}</span>`).join('')}<i class="bi__sweep"></i></div></div>
-<script>(function(){var d=document.documentElement,bi=document.getElementById('bi'),seen=0;try{var ts=+localStorage.getItem('bv-bi-t')||0;seen=sessionStorage.getItem('bv-bi')||(Date.now()-ts<432e5)}catch(e){}
-if(!bi)return;if(seen||matchMedia('(prefers-reduced-motion:reduce)').matches){bi.remove();d.classList.remove('bi-pre');return}
-d.classList.add('bi-lock');try{sessionStorage.setItem('bv-bi','1');localStorage.setItem('bv-bi-t',Date.now())}catch(e){}
+<script>(function(){var d=document.documentElement,bi=document.getElementById('bi'),seen=0;try{seen=sessionStorage.getItem('bv-bi')}catch(e){}
+if(!bi)return;if(seen){bi.remove();d.classList.remove('bi-pre');return}
+d.classList.add('bi-lock');try{sessionStorage.setItem('bv-bi','1')}catch(e){}
 function end(){if(!bi.parentNode)return;bi.classList.add('out');setTimeout(function(){bi.remove();d.classList.remove('bi-lock','bi-pre')},900)}
 var t=setTimeout(end,3300);bi.addEventListener('click',function(){clearTimeout(t);end()});setTimeout(function(){d.classList.remove('bi-lock','bi-pre')},5200)})()</script>`
 const page = ({ rel, title, desc, active, home = false, body }) =>

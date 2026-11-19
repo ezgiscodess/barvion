@@ -289,7 +289,7 @@
 /* ---------- Performans: videolar yalnız görünürken oynar; tasarruf modunda / azaltılmış harekette durur ---------- */
 (function(){
   var vs=[].slice.call(document.querySelectorAll('video'));if(!vs.length)return;
-  var c=navigator.connection||{},lite=(c.saveData===true)||/(^|-)2g$/.test(c.effectiveType||'')||matchMedia('(prefers-reduced-motion:reduce)').matches;
+  var c=navigator.connection||{},lite=false;
   if(lite){vs.forEach(function(v){v.removeAttribute('autoplay');v.pause();v.preload='none'});return}
   var hero=document.querySelector('#hmedia .hv');
   if(hero&&'IntersectionObserver' in window){new IntersectionObserver(function(e){var v=hero;if(e[0].isIntersecting){var p=v.play();p&&p.catch&&p.catch(function(){})}else v.pause()},{threshold:.05}).observe(document.getElementById('hmedia'))}
@@ -299,7 +299,6 @@
 /* ---------- Safari / düşük güç modu: otomatik oynatma engellenirse ilk dokunuşta ve periyodik olarak yeniden dener ---------- */
 (function(){
   var vs=[].slice.call(document.querySelectorAll('video'));if(!vs.length)return;
-  var cn=navigator.connection||{},off=cn.saveData===true||matchMedia('(prefers-reduced-motion:reduce)').matches;if(off)return;
   function vis(v){var r=v.getBoundingClientRect();return r.bottom>0&&r.top<innerHeight}
   function kick(){vs.forEach(function(v){v.muted=true;v.setAttribute('playsinline','');if(v.paused&&vis(v)&&!document.hidden){var p=v.play();p&&p.catch&&p.catch(function(){})}})}
   kick();setTimeout(kick,400);setTimeout(kick,1500);
