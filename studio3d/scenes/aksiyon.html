@@ -1,0 +1,36 @@
+<!doctype html><html><head><meta charset="utf-8"><title>aksiyon</title><style>html,body{margin:0;height:100%;background:#0b1220;overflow:hidden}canvas{display:block}</style><script type="importmap">{"imports":{"three":"../node_modules/three/build/three.module.js","three/addons/":"../node_modules/three/examples/jsm/"}}</script></head><body><script type="module">
+import { THREE, M, mesh, at, box, cyl, setup, label, LOOP } from "./common.js";
+const steel = M({ color: 0x9aa3b2, metalness: 1, roughness: .32 }), dark = M({ color: 0x1b2333, roughness: .5, metalness: .4 });
+const glowC = (c, e = 1.6) => M({ color: c, emissive: c, emissiveIntensity: e });
+const floorM = () => { const f = box(40, .2, 30, M({ color: 0x0f1a2e, roughness: .35, metalness: .6 })); f.position.y = -.1; return f; };
+const grid = (scene) => { for (let i = -9; i <= 9; i++) { scene.add(at(box(.02, .004, 30, M({ color: 0x1d3050 })), i * 2, .003, 0)); scene.add(at(box(40, .004, .02, M({ color: 0x1d3050 })), 0, .003, i * 1.6)); } };
+const ease = (x) => x * x * (3 - 2 * x), clamp = (x) => Math.max(0, Math.min(1, x));
+
+const { scene, start } = setup({ cam: [0, 8, 20], look: [0, 1, 0], fov: 36 });
+scene.add(floorM()); grid(scene);
+const XS = [-6, -2, 2, 6], st = [], names = [0xffb347, 0xffb347, 0xf5b945, 0x38e58e];
+XS.forEach((x, i) => {
+  const g = new THREE.Group(); g.position.set(x, 0, 0); scene.add(g);
+  g.add(at(cyl(1.15, 1.25, .3, M({ color: 0x1c2a47, metalness: .6, roughness: .3 }), 48), 0, .15, 0));
+  const pl = mesh(new THREE.TorusGeometry(1.1, .04, 10, 48), glowC(names[i], .5)); pl.rotation.x = Math.PI / 2; pl.position.y = .32; g.add(pl);
+  const p = new THREE.Group(); p.position.y = .3; g.add(p);
+  if (i === 0) { p.add(at(box(.7, 1.2, .1, M({ color: 0x0f141f, roughness: .3 })), 0, .8, 0)); p.add(at(box(.6, 1.0, .02, glowC(0x2f7fbf, .6)), 0, .8, .06)); p.add(at(mesh(new THREE.SphereGeometry(.12, 12, 10), glowC(0xff5a3c, 1.5)), .25, 1.3, .08)); }
+  if (i === 1) { p.add(at(mesh(new THREE.CapsuleGeometry(.28, .6, 6, 16), M({ color: 0x24334f, roughness: .6 })), 0, .8, 0)); p.add(at(mesh(new THREE.SphereGeometry(.22, 20, 14), M({ color: 0xc49a7c, roughness: .6 })), 0, 1.55, 0)); p.add(at(mesh(new THREE.SphereGeometry(.24, 20, 12, 0, 6.28, 0, 1.57), M({ color: 0xf1f3f7, roughness: .3 })), 0, 1.6, 0)); }
+  if (i === 2) { const w = new THREE.Group(); w.add(at(box(.18, 1.3, .12, steel), 0, 0, 0)); w.add(at(mesh(new THREE.TorusGeometry(.26, .08, 10, 24, 5), steel), 0, .7, 0)); w.position.y = .95; w.rotation.z = .6; p.add(w); p.userData.w = w; }
+  if (i === 3) { const c1 = box(.18, .7, .12, glowC(0x38e58e, 1.2)), c2 = box(.18, 1.2, .12, glowC(0x38e58e, 1.2)); c1.position.set(-.3, .9, 0); c1.rotation.z = .8; c2.position.set(.15, 1.0, 0); c2.rotation.z = -.7; p.add(c1, c2); }
+  g.userData = { pl, p }; st.push(g);
+});
+for (let i = 0; i < 3; i++) scene.add(at(box(2.2, .06, .12, glowC(0x2f7fbf, .8)), XS[i] + 2, .2, 0));
+['1 Bildirim|QR ile', '2 Atama|ekip seçilir', '3 Müdahale|işlem yapılır', '4 Doğrulama|test ve kayıt'].forEach((t, i) => { const [a, b] = t.split('|'); const l = label(a, { s: 1.15, sub: b }); l.position.set(XS[i], 3.6, 0); scene.add(l); });
+const card = new THREE.Group(); scene.add(card);
+card.add(at(box(1.3, .08, .9, M({ color: 0xeaf3ff, roughness: .4, clearcoat: .6 })), 0, 0, 0)); card.add(at(box(.9, .02, .1, glowC(0x2f7fbf, .8)), 0, .05, -.2)); card.add(at(box(.6, .02, .08, M({ color: 0x9fb2d3 })), -.1, .05, .02)); const ok = mesh(new THREE.SphereGeometry(.1, 14, 10), glowC(0x38e58e, 2)); ok.position.set(.45, .08, .27); card.add(ok);
+start((t) => {
+  const u = t / LOOP, k = Math.min(3.999, u * 4.2 % 4.2), seg = Math.floor(Math.min(k, 3.999)), f = k - seg;
+  const hold = .45; let x; const idx = Math.min(seg, 3);
+  if (u * 4.2 >= 3.4 + 0.3 && u > .83) { x = XS[3]; } else { const a = XS[idx], b = XS[Math.min(idx + 1, 3)]; x = a + (b - a) * ease(clamp((f - hold) / (1 - hold))); }
+  const act = Math.min(3, Math.round(x / 4 + 1.5));
+  card.position.set(x, 1.6 + .18 * Math.sin(t * 3), 0); card.rotation.y = Math.sin(t * 1.4) * .15;
+  st.forEach((g, i) => { const on = i === act; g.userData.pl.material.emissiveIntensity = on ? 2.2 : .4; g.userData.p.position.y = .3 + (on ? .08 + .04 * Math.sin(t * 6) : 0); if (g.userData.p.userData.w && on) g.userData.p.userData.w.rotation.z = .6 + Math.sin(t * 8) * .35; });
+  ok.material.emissiveIntensity = x > 5.9 ? 3 : .5; ok.scale.setScalar(x > 5.9 ? 1.6 : 1);
+});
+</script></body></html>

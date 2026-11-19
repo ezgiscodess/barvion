@@ -1,0 +1,30 @@
+<!doctype html><html lang="tr"><head><meta charset="utf-8"><title>gida</title>
+<style>html,body{margin:0;height:100%;background:#14171d;overflow:hidden}canvas{display:block}</style>
+<script type="importmap">{"imports":{"three":"../node_modules/three/build/three.module.js","three/addons/":"../node_modules/three/examples/jsm/"}}</script></head><body>
+<script type="module">
+import { THREE, init, mat, M, mesh, at, box, cyl, caps, sph, worker, car, chain, belt, robot, grip, crate, ac, floorLight, reach, clamp, lerp, sm, eo, ei, rng, LOOP } from "./lib.js";
+
+const { scene, start } = init({ camZ: 13.5 });
+const B = belt(30, .75, 0, 1.2); scene.add(B);
+const boxes = []; for (let i = 0; i < 7; i++) { const b = crate(.62, .42, .5); scene.add(b); boxes.push(b); }
+const wk = [{ w: worker({ coat: true }), x: -1.9, th: 2.2 }, { w: worker({ coat: true }), x: 2.1, th: -2.2 }];
+wk.forEach(({ w, x, th }) => { w.position.set(x, 0, 1.15); w.rotation.y = th; scene.add(w); floorLight(scene, x, 1.15); });
+const stack = new THREE.Group(); for (let i = 0; i < 3; i++) { const c = crate(.62, .42, .5); c.position.set(0, i * .43, 0); stack.add(c); } stack.position.set(5.0, .79, 0); scene.add(stack);
+const SP = 3.4;
+const hp = (w) => { const A = w.userData.arms, a = new THREE.Vector3(), b = new THREE.Vector3(); A.L.hand.getWorldPosition(a); A.R.hand.getWorldPosition(b); return a.add(b).multiplyScalar(.5); };
+start((t) => {
+  const u = t / LOOP, tot = SP * 7;
+  wk.forEach(({ w }, i) => { const A = w.userData.arms; w.userData.head.rotation.x = .3; w.userData.head.rotation.y = 0; w.userData.carry = 0; wk[i].k = 0; });
+  boxes.forEach((b, i) => { const x = ((((u * SP * 2 + i * SP) % tot) + tot) % tot) - tot / 2 + 1; b.position.set(x, .79, 0); b.visible = Math.abs(x) < 7; b.rotation.y = 0; b.userData.x = x; });
+  // her işçi, önünden geçen kutuyu iki eliyle tutar, hafifçe kaldırıp bırakır
+  wk.forEach((o) => {
+    const { w, x } = o, A = w.userData.arms;
+    let near = null; boxes.forEach((b) => { if (Math.abs(b.userData.x - x) < 1.1 && (!near || Math.abs(b.userData.x - x) < Math.abs(near.userData.x - x))) near = b; });
+    const d = near ? Math.abs(near.userData.x - x) : 2, k = sm(clamp(1 - d / 1.0));
+    A.L.sh.rotation.x = lerp(-.25, -1.15, k); A.R.sh.rotation.x = lerp(-.25, -1.15, k); A.L.sh.rotation.z = lerp(0, .35, k); A.R.sh.rotation.z = lerp(0, -.35, k); A.L.el.rotation.x = lerp(-.3, -.95, k); A.R.el.rotation.x = lerp(-.3, -.95, k);
+    w.userData.body.rotation.x = .1 * k;
+    if (near && k > .55) { const h = hp(w); w.updateMatrixWorld(true); near.position.lerp(new THREE.Vector3(h.x, h.y + .04, h.z - .12), sm(clamp((k - .55) / .45))); }
+  });
+});
+
+</script></body></html>

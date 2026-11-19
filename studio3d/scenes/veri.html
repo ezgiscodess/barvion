@@ -1,0 +1,52 @@
+<!doctype html><html><head><meta charset="utf-8"><title>veri</title><style>html,body{margin:0;height:100%;background:#0b1220;overflow:hidden}canvas{display:block}</style><script type="importmap">{"imports":{"three":"../node_modules/three/build/three.module.js","three/addons/":"../node_modules/three/examples/jsm/"}}</script></head><body><script type="module">
+import { THREE, M, mesh, at, box, cyl, setup, label, LOOP } from "./common.js";
+const { scene, start } = setup({ cam: [.4, 13, 17], look: [.4, .5, .3], fov: 40 });
+const steel = M({ color: 0x9aa3b2, metalness: 1, roughness: .32 }), dark = M({ color: 0x1b2333, roughness: .5, metalness: .4 }), white = M({ color: 0xe8edf5, roughness: .4, clearcoat: .5 });
+const glowC = M({ color: 0xffb347, emissive: 0xffb347, emissiveIntensity: 1.6 });
+const floor = box(40, .2, 30, M({ color: 0x0f1a2e, roughness: .35, metalness: .6 })); floor.position.y = -.1; scene.add(floor);
+for (let i = -9; i <= 9; i++) { scene.add(at(box(.02, .004, 30, M({ color: 0x1d3050 })), i * 2, .003, 0)); scene.add(at(box(40, .004, .02, M({ color: 0x1d3050 })), 0, .003, i * 1.6)); }
+const GW = new THREE.Vector3(1.6, 1.3, 0);
+const LB=['Makine','Sensör','Sayaç','ERP','Veri tabanı'];
+// kaynaklar
+const src = [], zs = [-4.4, -2.2, 0, 2.2, 4.4];
+const mk = [
+  () => { const g = new THREE.Group(); g.add(at(box(1.5, .9, 1.1, white), 0, .45, 0)); g.add(at(box(.9, .5, .02, M({ color: 0x14243f })), -.1, .55, .56)); g.add(at(box(.5, .4, .5, steel), .35, 1.1, 0)); const l = mesh(new THREE.SphereGeometry(.07, 16, 12), M({ color: 0x38e58e, emissive: 0x38e58e, emissiveIntensity: 2 })); l.position.set(.6, .9, .56); g.add(l); g.userData.l = l; return g; },
+  () => { const g = new THREE.Group(); g.add(at(cyl(.12, .12, 1.3, steel), 0, .65, 0)); g.add(at(cyl(.45, .45, .12, dark), 0, .06, 0)); const r = mesh(new THREE.TorusGeometry(.35, .035, 10, 40), glowC); r.position.y = 1.4; r.rotation.x = Math.PI / 2; g.add(r); g.userData.r = r; return g; },
+  () => { const g = new THREE.Group(); g.add(at(box(1.3, .8, .7, dark), 0, .4, 0)); g.add(at(box(1.0, .4, .02, M({ color: 0x06101e, emissive: 0xfff1d0, emissiveIntensity: .35 })), 0, .5, .36)); return g; },
+  () => { const g = new THREE.Group(); for (let i = 0; i < 4; i++) g.add(at(box(1.3, .28, .9, i % 2 ? M({ color: 0x3a5f95, roughness: .5 }) : M({ color: 0xffb347, roughness: .5 })), 0, .16 + i * .31, 0)); return g; },
+  () => { const g = new THREE.Group(); for (let i = 0; i < 3; i++) g.add(at(cyl(.55, .55, .32, M({ color: 0x7f93b7, metalness: .8, roughness: .3 }), 48), 0, .2 + i * .36, 0)); return g; },
+];
+const curves = [], packets = [];
+zs.forEach((z, i) => {
+  const g = mk[i](); g.position.set(-6, 0, z); scene.add(g); src.push(g); { const l = label(LB[i], { s: 1.05 }); l.position.set(-6, 2.3, z); scene.add(l); }
+  const p0 = new THREE.Vector3(-5.2, .55, z), p3 = new THREE.Vector3(GW.x - 1.1, 1.2 + (i - 2) * .16, (i - 2) * .35);
+  const c = new THREE.CubicBezierCurve3(p0, new THREE.Vector3(-3.4, .5, z), new THREE.Vector3(-2.8, 1, p3.z), p3); curves.push(c);
+  scene.add(mesh(new THREE.TubeGeometry(c, 60, .05, 10), M({ color: 0x1f3a63, roughness: .4, metalness: .6 })));
+  for (let k = 0; k < 2; k++) { const s = new THREE.Mesh(new THREE.SphereGeometry(.12, 16, 12), new THREE.MeshBasicMaterial({ color: 0xfff1d0 })); scene.add(s); packets.push({ s, c, k }); }
+});
+// geçit
+const gw = new THREE.Group(); gw.position.set(GW.x, 0, 0); scene.add(gw);
+gw.add(at(box(2.0, 2.6, 2.2, M({ color: 0x2a3d63, metalness: .8, roughness: .3, clearcoat: .6 })), 0, 1.3, 0));
+const scr = box(1.5, 1.0, .02, M({ color: 0x06101e, emissive: 0xffb347, emissiveIntensity: .25 })); scr.position.set(0, 1.7, 1.11); gw.add(scr);
+const bars = []; for (let i = 0; i < 5; i++) { const b = box(.16, .6, .02, glowC); b.position.set(-.5 + i * .25, 1.45, 1.13); b.geometry.translate(0, .3, 0); gw.add(b); bars.push(b); }
+const leds = []; for (let i = 0; i < 6; i++) { const l = mesh(new THREE.SphereGeometry(.05, 12, 10), M({ color: 0x38e58e, emissive: 0x38e58e, emissiveIntensity: 2 })); l.position.set(-.6 + i * .24, .7, 1.12); gw.add(l); leds.push(l); }
+const out = new THREE.CubicBezierCurve3(new THREE.Vector3(2.6, 1.3, 0), new THREE.Vector3(3.6, 1.3, 0), new THREE.Vector3(4, 1.3, 0), new THREE.Vector3(4.9, 1.3, 0));
+scene.add(mesh(new THREE.TubeGeometry(out, 20, .06, 10), M({ color: 0x1f3a63, roughness: .4, metalness: .6 })));
+for (let k = 0; k < 3; k++) { const s = new THREE.Mesh(new THREE.SphereGeometry(.14, 16, 12), new THREE.MeshBasicMaterial({ color: 0xfff1d0 })); scene.add(s); packets.push({ s, c: out, k, out: 1 }); }
+{ const l = label('BARVION', { s: 1.2, sub: 'veri geçidi' }); l.position.set(GW.x, 3.5, 0); scene.add(l); }
+// panel
+const mon = new THREE.Group(); mon.position.set(6.6, 0, 0); scene.add(mon);
+mon.add(at(box(2.6, 2.0, .12, dark), 0, 1.9, 0)); mon.add(at(box(.2, .9, .2, steel), 0, .5, 0)); mon.add(at(box(1.2, .1, .8, steel), 0, .05, 0));
+mon.add(at(box(2.4, 1.8, .02, M({ color: 0x0a1930, emissive: 0x0a2a55, emissiveIntensity: .5 })), 0, 1.9, .07));
+const cb = []; for (let i = 0; i < 7; i++) { const b = box(.22, 1, .02, i % 2 ? glowC : M({ color: 0x2f7fbf, emissive: 0x2f7fbf, emissiveIntensity: 1 })); b.geometry.translate(0, .5, 0); b.position.set(-.85 + i * .28, 1.2, .09); mon.add(b); cb.push(b); }
+{ const l = label('Merkezi veri', { s: 1.2, sub: 'tek yapı · canlı' }); l.position.set(6.6, 3.6, 0); scene.add(l); }
+start((t) => {
+  const u = t / LOOP;
+  packets.forEach(({ s, c, k, out }) => { const sp = out ? 3 : 2, p = (((u * sp + k / (out ? 3 : 2)) % 1) + 1) % 1; s.position.copy(c.getPoint(p)); s.scale.setScalar(.6 + Math.sin(p * Math.PI) * .6); });
+  src[0].userData.l.material.emissiveIntensity = 1.2 + Math.sin(u * Math.PI * 8);
+  src[1].userData.r.scale.setScalar(1 + .12 * Math.sin(u * Math.PI * 4)); src[1].userData.r.material.emissiveIntensity = 1.2 + Math.sin(u * Math.PI * 4);
+  bars.forEach((b, i) => { b.scale.y = .3 + .7 * Math.abs(Math.sin(u * Math.PI * 2 * 2 + i * .9)); });
+  leds.forEach((l, i) => { l.material.emissiveIntensity = Math.sin(u * Math.PI * 2 * 3 + i) > 0 ? 2 : .3; });
+  cb.forEach((b, i) => { b.scale.y = .25 + .75 * (.5 + .5 * Math.sin(u * Math.PI * 2 + i * .7)) * (.4 + i * .1); });
+});
+</script></body></html>

@@ -1,0 +1,152 @@
+<!doctype html><html><head><meta charset="utf-8"><title>madalyon</title><style>html,body{margin:0;height:100%;background:#000;overflow:hidden}canvas{display:block}</style>
+<script type="importmap">{"imports":{"three":"../node_modules/three/build/three.module.js","three/addons/":"../node_modules/three/examples/jsm/"}}</script></head><body>
+<script type="module">
+import * as THREE from "three";
+import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
+import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
+import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
+import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
+import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
+
+const LOOP = 20, q = new URLSearchParams(location.search), W = innerWidth, H = innerHeight;
+window.__ready = false;
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(1); renderer.setSize(W, H);
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = .9; renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0x000000);
+
+/* yansıma ortamı: koyu stüdyo + yumuşak ışık şeritleri (metalin lüks görünmesi için) */
+const pm = new THREE.PMREMGenerator(renderer);
+scene.environment = (() => { const s = new THREE.Scene(); s.add(new THREE.Mesh(new THREE.SphereGeometry(30, 32, 16), new THREE.MeshBasicMaterial({ color: 0x03050a, side: THREE.BackSide })));
+  const strip = (w, h, x, y, z, e, c) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: new THREE.Color(c).multiplyScalar(e), side: THREE.DoubleSide })); m.position.set(x, y, z); m.lookAt(0, 0, 0); s.add(m); };
+  strip(16, 4, -6, 9, 7, 2.2, 0xffffff); strip(3, 12, 11, 3, 3, 1.4, 0xdfe9ff); strip(3, 10, -11, 2, -4, 1.0, 0x6f9bff); strip(18, 2, 0, -2, 9, .35, 0x9fb4d8); strip(10, 3, 6, 7, -9, 1.2, 0xbcd0ff);
+  return pm.fromScene(s, .03).texture; })();
+
+/* dokular */
+const cv = (n, fn) => { const c = document.createElement("canvas"); c.width = c.height = n; fn(c.getContext("2d"), n); const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 16; return t; };
+const hex = cv(512, (g, n) => { g.fillStyle = "#808080"; g.fillRect(0, 0, n, n); const r = 14, h = r * Math.sqrt(3); g.strokeStyle = "#1a1a1a"; g.lineWidth = 3;
+  for (let y = -h; y < n + h; y += h) for (let x = -r * 3; x < n + r * 3; x += r * 3) for (const [ox, oy] of [[0, 0], [r * 1.5, h / 2]]) { g.beginPath(); for (let k = 0; k < 6; k++) { const a = k * Math.PI / 3; const px = x + ox + Math.cos(a) * r, py = y + oy + Math.sin(a) * r; k ? g.lineTo(px, py) : g.moveTo(px, py); } g.closePath(); g.fillStyle = "#b8b8b8"; g.fill(); g.stroke(); } });
+const knurl = cv(256, (g, n) => { g.fillStyle = "#808080"; g.fillRect(0, 0, n, n); g.fillStyle = "#e0e0e0"; for (let i = 0; i < n; i += 8) g.fillRect(i, 0, 4, n); g.fillStyle = "#303030"; for (let i = 4; i < n; i += 8) g.fillRect(i, 0, 4, n); });
+const brushed = cv(512, (g, n) => { g.fillStyle = "#808080"; g.fillRect(0, 0, n, n); for (let i = 0; i < 1800; i++) { const v = 90 + Math.random() * 90; g.strokeStyle = `rgb(${v},${v},${v})`; g.globalAlpha = .35; g.lineWidth = Math.random() * 1.4 + .3; const y = Math.random() * n, x = Math.random() * n; g.beginPath(); g.moveTo(x, y); g.lineTo(x + 40 + Math.random() * 160, y + (Math.random() - .5) * 3); g.stroke(); } });
+hex.repeat.set(2.6, 2.6); knurl.repeat.set(90, 1); brushed.repeat.set(2, 2);
+
+const M = (o) => new THREE.MeshPhysicalMaterial(o);
+const chrome = M({ color: 0xdfe4ec, metalness: 1, roughness: .26, clearcoat: .25, clearcoatRoughness: .2 });
+const steel = M({ color: 0xaeb6c4, metalness: 1, roughness: .46, bumpMap: brushed, bumpScale: .12 });
+const steelD = M({ color: 0x69727f, metalness: 1, roughness: .5, bumpMap: brushed, bumpScale: .1 });
+const gun = M({ color: 0x20252e, metalness: .9, roughness: .42, bumpMap: hex, bumpScale: .7 });
+const rimM = M({ color: 0xcdd3dd, metalness: 1, roughness: .36, bumpMap: knurl, bumpScale: .5 });
+const blue = new THREE.MeshBasicMaterial({ color: 0x5ab4ff });
+const mesh = (g, m, c = true) => { const o = new THREE.Mesh(g, m); o.castShadow = c; o.receiveShadow = true; return o; };
+const at = (o, x, y, z) => { o.position.set(x, y, z); return o; };
+const box = (w, h, d, m) => mesh(new RoundedBoxGeometry(w, h, d, 2, Math.min(.02, Math.min(w, h, d) * .3)), m);
+const cyl = (a, b, h, m, s = 40) => mesh(new THREE.CylinderGeometry(a, b, h, s), m);
+
+const world = new THREE.Group(); scene.add(world);
+const med = new THREE.Group(); world.add(med);
+
+/* ---------- madalyon ---------- */
+{
+  const prof = [[0, 0], [4.15, 0], [4.28, .05], [4.34, .16], [4.34, .26], [4.26, .34], [4.1, .38], [3.55, .38]].map(([r, y]) => new THREE.Vector2(r, y));
+  const body = mesh(new THREE.LatheGeometry(prof, 160), chrome); med.add(body);
+  const rim = mesh(new THREE.CylinderGeometry(4.34, 4.34, .22, 200, 1, true), rimM); rim.position.y = .2; rim.scale.set(1.001, 1, 1.001); med.add(rim);
+  const ins = mesh(new THREE.CylinderGeometry(3.5, 3.5, .06, 160), gun); ins.position.y = .36; ins.receiveShadow = true; med.add(ins);
+  const tor = mesh(new THREE.TorusGeometry(3.52, .06, 16, 200), chrome); tor.rotation.x = Math.PI / 2; tor.position.y = .4; med.add(tor);
+  const tor2 = mesh(new THREE.TorusGeometry(3.1, .02, 12, 200), steelD); tor2.rotation.x = Math.PI / 2; tor2.position.y = .4; med.add(tor2);
+  // alt aydınlık halka (mavi)
+  const glow = new THREE.Mesh(new THREE.TorusGeometry(4.5, .05, 12, 200), new THREE.MeshBasicMaterial({ color: 0x4aa3ff })); glow.rotation.x = Math.PI / 2; glow.position.y = -.12; med.add(glow);
+  const disc = new THREE.Mesh(new THREE.CircleGeometry(5.0, 80), new THREE.MeshBasicMaterial({ color: 0x1e5fd8, transparent: true, opacity: .07, blending: THREE.AdditiveBlending, depthWrite: false })); disc.rotation.x = -Math.PI / 2; disc.position.y = -.3; med.add(disc);
+}
+
+/* ---------- metal fabrika kompleksi ---------- */
+const F = new THREE.Group(); F.position.y = .4; med.add(F);
+// ana salonlar: düz çatılı, farklı uzunlukta dört bina
+{
+  const W = [1.05, .62, 1.2, .72], Hh = [.62, .86, .55, .74], gap = .07; let x = -2.25;
+  W.forEach((w, i) => {
+    const h = Hh[i], cx = x + w / 2, z = .85;
+    F.add(at(box(w, h, 1.5, steel), cx, h / 2, z));
+    F.add(at(box(w + .06, .04, 1.56, chrome), cx, h + .02, z));            // çatı kenar çerçevesi
+    F.add(at(box(w * .5, .05, .5, steelD), cx + (i % 2 ? -.05 : .08), h + .065, z - .2));  // çatı üstü ekipman
+    const n = Math.max(1, Math.round(w / .42));
+    for (let k = 0; k < n; k++) F.add(at(box(.05, .26, .02, blue), x + w * (k + .5) / n, h * .52, z + .76));
+    F.add(at(box(w * .8, .012, .012, steelD), cx, h * .22, z + .755));
+    x += w + gap;
+  });
+}
+// silolar
+[[-1.9, -.7, 1.5], [-1.25, -.9, 1.2], [-.6, -.7, 1.65]].forEach(([x, z, h]) => {
+  const s = new THREE.Group(); s.position.set(x, 0, z); F.add(s);
+  s.add(at(cyl(.3, .3, h, steel), 0, h / 2, 0)); const dome = mesh(new THREE.SphereGeometry(.3, 40, 16, 0, 7, 0, Math.PI / 2), steel); dome.position.y = h; s.add(dome);
+  for (let k = 1; k < 4; k++) { const r = mesh(new THREE.TorusGeometry(.305, .012, 8, 48), chrome); r.rotation.x = Math.PI / 2; r.position.y = h * k / 4; s.add(r); }
+  s.add(at(cyl(.02, .02, .3, chrome, 10), 0, h + .42, 0));
+});
+// kafes kule (ön ısıtıcı) + siklonlar
+const tower = new THREE.Group(); tower.position.set(.9, 0, -.55); F.add(tower);
+{
+  const H = 2.5, a = .36;
+  for (const [x, z] of [[-a, -a], [a, -a], [-a, a], [a, a]]) tower.add(at(box(.05, H, .05, steel), x, H / 2, z));
+  for (let k = 0; k <= 6; k++) { const y = k * H / 6; for (const z of [-a, a]) tower.add(at(box(a * 2, .025, .025, steelD), 0, y, z)); for (const x of [-a, a]) tower.add(at(box(.025, .025, a * 2, steelD), x, y, 0)); }
+  for (let k = 0; k < 6; k++) { const y = (k + .5) * H / 6; const d = box(.02, H / 6 * 1.22, .02, steelD); d.position.set(a, y, 0); d.rotation.x = k % 2 ? .78 : -.78; tower.add(d); const d2 = d.clone(); d2.position.x = -a; tower.add(d2); }
+  for (let k = 0; k < 4; k++) { const c = new THREE.Group(); c.position.y = .55 + k * .55; c.add(at(cyl(.2, .2, .22, steel), 0, .11, 0)); c.add(at(cyl(.2, .03, .3, steel), 0, -.15, 0)); tower.add(c); }
+  tower.add(at(cyl(.1, .1, 1.2, chrome, 24), 0, H + .55, 0));
+  const pipe = mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new THREE.Vector3(.2, 2.1, 0), new THREE.Vector3(.6, 2.35, .1), new THREE.Vector3(.5, 1.5, .3), new THREE.Vector3(.7, .9, .2)]), 40, .05, 12), chrome); tower.add(pipe);
+}
+// baca (yüksek)
+{
+  const ch = new THREE.Group(); ch.position.set(1.75, 0, .1); F.add(ch);
+  ch.add(at(cyl(.1, .15, 3.1, steel), 0, 1.55, 0)); for (const y of [.6, 1.4, 2.2, 3.0]) { const r = mesh(new THREE.TorusGeometry(.12, .014, 8, 32), chrome); r.rotation.x = Math.PI / 2; r.position.y = y; ch.add(r); }
+  ch.add(at(cyl(.115, .115, .08, blue, 24), 0, 3.12, 0)); ch.userData.top = 3.15;
+}
+// taşıma köprüsü (eğik konveyör)
+{
+  const len = 3.0, g = new THREE.Group(); g.position.set(.1, .45, -.3); g.rotation.z = .5; F.add(g);
+  g.add(at(box(len, .06, .22, steel), len / 2, 0, 0));
+  for (let k = 0; k <= 16; k++) g.add(at(box(.012, .14, .22, steelD), k * len / 16, .07, 0));
+  for (const z of [-.11, .11]) g.add(at(box(len, .02, .014, chrome), len / 2, .16, z));
+  for (let k = 1; k < 4; k++) { const x = len * k / 4; g.add(at(box(.04, .9 * k / 4 + .1, .04, steelD), x, -(.9 * k / 4 + .1) / 2, .09)); }
+}
+// ikinci küçük salon + tanklar
+F.add(at(box(1.0, .5, .8, steelD), 1.9, .25, 1.15));
+for (let k = 0; k < 3; k++) { const t = cyl(.18, .18, .5, steel, 32); t.position.set(-2.2 + k * .42, .25, 1.55 + (k % 2) * .05); t.visible = false; F.add(t); }
+F.add(at(cyl(.22, .22, .7, steel), 2.4, .35, -.1)); F.add(at(cyl(.22, .22, .7, steel), 2.4, .35, -.65));
+// yer boruları
+{ const p = mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new THREE.Vector3(-1.4, .12, -.2), new THREE.Vector3(-.2, .12, -.1), new THREE.Vector3(.5, .12, .1), new THREE.Vector3(1.4, .12, .3)]), 50, .06, 12), chrome); F.add(p); }
+// yanıp sönen ışıklar
+const lights = []; for (const [x, y, z] of [[1.75, 3.2, .1], [.9, 2.65, -.55], [-1.9, 1.62, -.7], [-.6, 1.8, -.7]]) { const l = new THREE.Mesh(new THREE.SphereGeometry(.035, 12, 10), new THREE.MeshBasicMaterial({ color: 0xff4a3a })); l.position.set(x, y, z); F.add(l); lights.push(l); }
+F.scale.setScalar(1.15); F.position.set(.1, .4, -.2);
+// duman
+const sm = (() => { const c = document.createElement("canvas"); c.width = c.height = 64; const g = c.getContext("2d"); const gr = g.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, "rgba(210,225,255,.55)"); gr.addColorStop(1, "rgba(210,225,255,0)"); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); return new THREE.CanvasTexture(c); })();
+const puffs = []; for (let i = 0; i < 18; i++) { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: sm, transparent: true, depthWrite: false, opacity: .0 })); s.userData.o = i / 18; F.add(s); puffs.push(s); }
+
+/* zemin gölgesi / yansıma hissi */
+const floor = new THREE.Mesh(new THREE.CircleGeometry(30, 64), new THREE.MeshStandardMaterial({ color: 0x030405, metalness: .3, roughness: .8 })); floor.rotation.x = -Math.PI / 2; floor.position.y = -.9; floor.receiveShadow = true; world.add(floor);
+
+/* ışıklar */
+scene.add(new THREE.HemisphereLight(0x8aa3d8, 0x000000, .25));
+const key = new THREE.SpotLight(0xfff4e6, 140, 60, Math.PI * .16, .7, 1.2); key.position.set(-6, 12, 8); key.target.position.set(0, 1, 0); key.castShadow = true; key.shadow.mapSize.set(2048, 2048); key.shadow.bias = -.0002; key.shadow.radius = 5; scene.add(key, key.target);
+const rim = new THREE.SpotLight(0x6fa0ff, 110, 50, Math.PI * .2, .8, 1.2); rim.position.set(9, 4, -8); rim.target.position.set(0, 1, 0); scene.add(rim, rim.target);
+const fill = new THREE.PointLight(0x9fc0ff, 10, 30, 1.8); fill.position.set(4, 3, 10); scene.add(fill);
+
+/* kamera + post */
+const camera = new THREE.PerspectiveCamera(26, W / H, .1, 100); camera.position.set(0, 5.2, 21);
+const composer = new EffectComposer(renderer); composer.addPass(new RenderPass(scene, camera));
+composer.addPass(new UnrealBloomPass(new THREE.Vector2(W, H), .06, .4, .95)); composer.addPass(new OutputPass());
+const OFFX = +(q.get("offx") ?? 3.3);
+const look = new THREE.Vector3(0, 1.9, 0);
+const f = (tt) => {
+  const t = ((tt % LOOP) + LOOP) % LOOP, u = t / LOOP, a = u * Math.PI * 2;
+  world.position.x = OFFX; world.position.y = .05 * Math.sin(a);
+  med.rotation.y = -.5 + Math.sin(a) * .26; med.rotation.x = .0; med.rotation.z = 0;
+  world.rotation.x = .1 + Math.sin(a + 1) * .015;
+  lights.forEach((l, i) => { l.visible = Math.sin(a * 6 + i * 1.7) > -.2; });
+  puffs.forEach((s) => { const p = (s.userData.o + u * 2) % 1; const top = 3.2; s.position.set(1.75 + p * .5 + Math.sin(p * 6 + s.userData.o * 9) * .08, top + p * 2.3, .1); const sc = .25 + p * 1.1; s.scale.set(sc, sc, 1); s.material.opacity = Math.sin(Math.PI * p) * .35; });
+  camera.position.x = Math.sin(a) * .1; camera.lookAt(look);
+  composer.render();
+};
+window.onSeek = f; f(0);
+if (!q.has("capture")) { const t0 = performance.now(); (function l() { f((performance.now() - t0) / 1000); requestAnimationFrame(l); })(); }
+window.__ready = true;
+</script></body></html>

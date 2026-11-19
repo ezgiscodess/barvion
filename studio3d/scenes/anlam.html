@@ -1,0 +1,27 @@
+<!doctype html><html><head><meta charset="utf-8"><title>anlam</title><style>html,body{margin:0;height:100%;background:#0b1220;overflow:hidden}canvas{display:block}</style><script type="importmap">{"imports":{"three":"../node_modules/three/build/three.module.js","three/addons/":"../node_modules/three/examples/jsm/"}}</script></head><body><script type="module">
+import { THREE, M, mesh, at, box, cyl, setup, label, LOOP } from "./common.js";
+const steel = M({ color: 0x9aa3b2, metalness: 1, roughness: .32 }), dark = M({ color: 0x1b2333, roughness: .5, metalness: .4 });
+const glowC = (c, e = 1.6) => M({ color: c, emissive: c, emissiveIntensity: e });
+const floorM = () => { const f = box(40, .2, 30, M({ color: 0x0f1a2e, roughness: .35, metalness: .6 })); f.position.y = -.1; return f; };
+const grid = (scene) => { for (let i = -9; i <= 9; i++) { scene.add(at(box(.02, .004, 30, M({ color: 0x1d3050 })), i * 2, .003, 0)); scene.add(at(box(40, .004, .02, M({ color: 0x1d3050 })), 0, .003, i * 1.6)); } };
+const ease = (x) => x * x * (3 - 2 * x), clamp = (x) => Math.max(0, Math.min(1, x));
+
+const { scene, start } = setup({ cam: [0, 8, 19], look: [0, 1.4, 0], fov: 36 });
+scene.add(floorM()); grid(scene);
+scene.add(at(box(11, .3, 4, M({ color: 0x14203a, metalness: .6, roughness: .3, clearcoat: .5 })), 0, .15, 0));
+const H = [2.6, 3.4, 2.2, 1.0, 3.0, 3.8, 2.8], bars = [], rings = [];
+H.forEach((h, i) => { const hot = i === 3; const b = box(.9, 1, .9, hot ? glowC(0xff5a3c, 1.1) : M({ color: i % 2 ? 0xffb347 : 0x2f7fbf, metalness: .4, roughness: .3, clearcoat: .6, emissive: 0x0a2a55, emissiveIntensity: .6 })); b.geometry.translate(0, .5, 0); b.position.set(-4 + i * 1.33, .3, 0); scene.add(b); bars.push(b); });
+const hot = mesh(new THREE.TorusGeometry(.8, .04, 10, 48), glowC(0xff5a3c, 2)); hot.rotation.x = Math.PI / 2; hot.position.set(-4 + 3 * 1.33, 2.6, 0); scene.add(hot);
+const beam = box(.06, 3.6, 4.2, M({ color: 0xffb347, emissive: 0xffb347, emissiveIntensity: 1.2, transparent: true, opacity: .35 })); beam.position.y = 2.2; scene.add(beam);
+'ABCDEFG'.split('').forEach((ch, i) => { const l = label('Hat ' + ch, { s: .75 }); l.position.set(-4 + i * 1.33, -.25, 1.6); scene.add(l); });
+{ const l = label('Darboğaz', { s: 1.1, sub: 'incelenmeli' }); l.position.set(-4 + 3 * 1.33, 4.2, 0); scene.add(l); }
+const pts = H.map((h, i) => new THREE.Vector3(-4 + i * 1.33, h + .9, 0)); const line = mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 80, .035, 8), glowC(0xffffff, 1)); scene.add(line);
+const dot = mesh(new THREE.SphereGeometry(.12, 16, 12), glowC(0xffffff, 2)); scene.add(dot); const curve = new THREE.CatmullRomCurve3(pts);
+start((t) => {
+  const u = t / LOOP, g = ease(clamp(u / .3));
+  bars.forEach((b, i) => { const k = ease(clamp((u - i * .03) / .28)); b.scale.y = Math.max(.02, H[i] * k * (1 + .03 * Math.sin(u * 12.56 + i))); });
+  const bx = -4 + (((u * 1.6) % 1)) * 8; beam.position.x = bx; 
+  hot.visible = u > .35; hot.position.y = 1.5 + 1.0 * Math.max(0, Math.sin(u * 25)) * .1 + 1.2; hot.scale.setScalar(1 + .12 * Math.sin(u * 40)); hot.rotation.z = u * 8;
+  line.visible = u > .3; dot.visible = u > .3; dot.position.copy(curve.getPoint(((u * 1.5) % 1)));
+});
+</script></body></html>

@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.DS_Store
+premium/screenshots/
+playwright-report/
+test-results/
+
+node_modules/
+studio3d/out/
+studio3d/node_modules/
+.DS_Store
+*.log

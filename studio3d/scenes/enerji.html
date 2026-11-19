@@ -1,0 +1,27 @@
+<!doctype html><html lang="tr"><head><meta charset="utf-8"><title>enerji</title>
+<style>html,body{margin:0;height:100%;background:#14171d;overflow:hidden}canvas{display:block}</style>
+<script type="importmap">{"imports":{"three":"../node_modules/three/build/three.module.js","three/addons/":"../node_modules/three/examples/jsm/"}}</script></head><body>
+<script type="module">
+import { THREE, init, mat, M, mesh, at, box, cyl, caps, sph, worker, car, chain, belt, robot, grip, crate, ac, floorLight, reach, clamp, lerp, sm, eo, ei, rng, LOOP } from "./lib.js";
+
+const { scene, start } = init({ camZ: 13.5 });
+const tr = new THREE.Group(); tr.position.set(.9, 0, -.4); scene.add(tr);
+tr.add(at(box(3.0, 2.6, 1.6, mat.steelL), 0, 1.6, 0)); tr.add(at(box(3.2, .25, 1.8, mat.steelD), 0, .15, 0)); tr.add(at(box(3.1, .12, 1.7, mat.white), 0, 2.95, 0));
+for (let i = 0; i < 3; i++) { const b = new THREE.Group(); b.position.set(-.9 + i * .9, 3.0, 0); for (let j = 0; j < 4; j++) b.add(at(cyl(.2 - j * .03, .2 - j * .03, .14, M({ color: 0x8a6f58, roughness: .5 }), 24), 0, .1 + j * .17, 0)); b.add(at(cyl(.05, .05, .2, mat.steelL, 12), 0, .8, 0)); tr.add(b); }
+for (let i = 0; i < 8; i++) tr.add(at(box(.07, 2.2, .5, mat.steelL), 1.7 + i * .13, 1.7, 0));
+const gauge = new THREE.Group(); gauge.position.set(-.8, 1.9, .83); tr.add(gauge);
+const gd = cyl(.36, .36, .06, mat.white, 40); gd.rotation.x = Math.PI / 2; gauge.add(gd);
+const np = new THREE.Group(); np.position.z = .05; const needle = box(.02, .28, .012, M({ color: 0xd1342c })); needle.position.y = .13; np.add(needle); gauge.add(np);
+tr.add(at(new THREE.Mesh(new THREE.PlaneGeometry(.9, .55), new THREE.MeshBasicMaterial({ color: 0x0f1420 })), .6, 1.8, .83));
+const bar = new THREE.Mesh(new THREE.PlaneGeometry(.7, .06), new THREE.MeshBasicMaterial({ color: 0x38e58e })); bar.position.set(.6, 1.78, .84); tr.add(bar);
+for (const x of [-3.9, -2.7]) { const c = new THREE.Group(); c.position.set(x, 0, .4); c.add(at(box(1.0, 2.4, .7, mat.steelL), 0, 1.2, 0)); c.add(at(box(.6, .5, .02, M({ color: 0x14202e })), 0, 1.6, .36)); const l = new THREE.Mesh(new THREE.CircleGeometry(.05, 16), new THREE.MeshBasicMaterial({ color: 0x38e58e })); l.position.set(.3, 2.1, .36); c.add(l); scene.add(c); }
+const wA = worker(), wB = worker(); wA.position.set(-.3, 0, 2.0); wB.position.set(-3.3, 0, 1.9); wA.rotation.y = .35; wB.rotation.y = .15; scene.add(wA, wB); floorLight(scene, -.3, 2.0); floorLight(scene, -3.3, 1.9);
+const clip = box(.2, .28, .015, M({ color: 0xf2f4f8, roughness: .6 })); wB.userData.arms.L.hand.add(clip); clip.position.set(0, -.02, .09);
+start((t) => {
+  const u = t / LOOP; np.rotation.z = Math.sin(u * Math.PI * 2) * .5 - .2; bar.scale.x = .55 + .4 * Math.pow(Math.sin(u * Math.PI * 4), 2);
+  const A = wA.userData.arms, B = wB.userData.arms;
+  wA.userData.head.rotation.y = .2; A.R.sh.rotation.x = -.35; A.L.sh.rotation.x = -.15;
+  B.L.sh.rotation.x = -1.15; B.L.el.rotation.x = -.8; B.R.sh.rotation.x = -1.2 + Math.sin(u * 40) * .05; B.R.el.rotation.x = -.95; wB.userData.head.rotation.x = .25;
+});
+
+</script></body></html>
