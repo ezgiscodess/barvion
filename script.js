@@ -328,8 +328,8 @@ setTimeout(chk,2000);setTimeout(chk,5000);h.addEventListener('playing',function(
     }else{img.src=s.replace(/\.mp4.*$/,'.jpg')}
   }
   function unfb(v){if(!v._fb)return;clearInterval(v._fbt);v._fb.remove();v._fb=null;v.style.display=''}
-  vs.forEach(function(v){v.addEventListener('playing',function(){unfb(v)})});
-  function check(){vs.forEach(function(v){if(v.paused&&!v._fb&&!document.hidden&&!v.ended)fb(v)})}
+  vs.forEach(function(v){v.addEventListener('playing',function(){v._pl=1;unfb(v)})});
+  function check(){vs.forEach(function(v){if((v.paused||!v._pl||v.currentTime<.05)&&!v._fb&&!document.hidden&&!v.ended)fb(v)})}
   setTimeout(check,1800);setTimeout(check,4000);
   vs.forEach(function(v){v.addEventListener('loadeddata',function(){setTimeout(check,1500)})});
 })();
