@@ -7,6 +7,7 @@ import { execSync } from 'node:child_process'
 import { areaScene } from './areas.mjs'
 import { stepIcon } from './icons.mjs'
 import { brandBoard, brandThemes } from './mport.mjs'
+import { brandPage } from './brandpage.mjs'
 import { bakimScene, veriScene, erpScene, markaScene, webScene } from './scenes.mjs'
 const BUILD = Date.now().toString(36)
 const ROOT = path.dirname(fileURLToPath(import.meta.url))
@@ -698,7 +699,7 @@ Object.entries(SVC).forEach(([slug, v]) => {
   const others = [...SOL, ...EXTRA].filter((x) => x !== v.ex).map((x) => `<a href="${solUrl(x)}" class="ot rv" style="--c:${x.color}">${x.img ? `<span class="ot__img" style="background-image:url(/img/pages/${x.img}.jpg)"></span>` : ''}<span class="ot__tint"></span><span class="ot__top"><b>${x.n}</b><em>${x.tag}</em></span><span class="ot__t">${x.title}</span></a>`).join('')
   page({
     rel: `cozumler/${slug}`, active: 'sol', title: v.ex.title, desc: v.ex.lede,
-    body: phero({ sol: true, flip: slug === 'web-sitesi-tasarimi', media: slug === 'web-sitesi-tasarimi' ? 'hero-insa' : 'hero-toplar', color: v.color, crumb: [['Çözümler', URL.sol], [v.ex.title]], label: v.label, title: v.title, lede: v.lede, actions: `<a class="btn btn--white" href="${URL.contact}?cozum=${encodeURIComponent(form)}">Görüşme Talep Et ${ARW}</a><a class="btn btn--ghost" href="#tema-laboratuvari">Kimlik setlerini gör</a>` }) + brandThemes('tr') + `
+    body: slug === 'reklam-ve-marka-danismanligi' ? phero({ sol: true, media: 'marka-tasarimi', color: v.color, crumb: [['Çözümler', URL.sol], [v.ex.title]], label: v.label, title: v.title, lede: v.lede, actions: `<a class="btn btn--white" href="${URL.contact}?cozum=${encodeURIComponent(form)}">Görüşme Talep Et ${ARW}</a><a class="btn btn--ghost" href="#tema-laboratuvari">Kimlik setlerini gör</a>` }) + brandThemes('tr') + brandPage({ ARW, contactHref: `${URL.contact}?cozum=${encodeURIComponent(form)}` }) + `<section class="sec others" style="--c:${v.color}"><div class="wrap"><p class="label rv">Diğer çözümler</p><div class="orail">${others}</div></div></section>` : phero({ sol: true, flip: slug === 'web-sitesi-tasarimi', media: slug === 'web-sitesi-tasarimi' ? 'hero-insa' : 'hero-toplar', color: v.color, crumb: [['Çözümler', URL.sol], [v.ex.title]], label: v.label, title: v.title, lede: v.lede, actions: `<a class="btn btn--white" href="${URL.contact}?cozum=${encodeURIComponent(form)}">Görüşme Talep Et ${ARW}</a><a class="btn btn--ghost" href="#tema-laboratuvari">Kimlik setlerini gör</a>` }) + brandThemes('tr') + `
 <section class="sec sol-intro" style="--c:${v.color}">
   <div class="wrap two">
     <div><p class="label rv">Nasıl çalışır</p><h2 class="huge rv">${v.head}</h2></div>

@@ -333,3 +333,20 @@ setTimeout(chk,2000);setTimeout(chk,5000);h.addEventListener('playing',function(
   setTimeout(check,1800);setTimeout(check,4000);
   vs.forEach(function(v){v.addEventListener('loadeddata',function(){setTimeout(check,1500)})});
 })();
+
+/* ---------- Reklam ve Marka sayfası: sistem sahnesi, kart eğimi, akış çizgisi ---------- */
+(function(){
+  var sys=document.querySelector('[data-bp-sys]');
+  if(sys&&'IntersectionObserver' in window){
+    var st=sys.querySelector('.bp-stage'),steps=[].slice.call(sys.querySelectorAll('.bp-st'));
+    var so=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){steps.forEach(function(x){x.classList.remove('on')});e.target.classList.add('on');st.setAttribute('data-stage',e.target.getAttribute('data-s'))}})},{rootMargin:'-45% 0px -45% 0px'});
+    steps.forEach(function(s){so.observe(s)});
+  }
+  [].slice.call(document.querySelectorAll('[data-tilt]')).forEach(function(c){
+    c.addEventListener('pointermove',function(e){if(e.pointerType!=='mouse')return;var r=c.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;
+      c.style.transform='perspective(800px) rotateX('+(-y*7)+'deg) rotateY('+(x*9)+'deg) translateY(-4px)';c.style.setProperty('--mx',(x+.5)*100+'%');c.style.setProperty('--my',(y+.5)*100+'%')});
+    c.addEventListener('pointerleave',function(){c.style.transform=''});
+  });
+  var fl=document.querySelector('[data-bp-flow]');
+  if(fl&&'IntersectionObserver' in window){new IntersectionObserver(function(e,o){if(e[0].isIntersecting){fl.classList.add('go');o.disconnect()}},{threshold:.3}).observe(fl)}else if(fl)fl.classList.add('go');
+})();
