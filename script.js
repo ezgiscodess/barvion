@@ -325,7 +325,7 @@ setTimeout(chk,2000);setTimeout(chk,5000);h.addEventListener('playing',function(
       var i=1,t;img.src='/video/frames/h001.jpg';
       v._fbt=setInterval(function(){i=i%80+1;img.src='/video/frames/h'+('00'+i).slice(-3)+'.jpg'},125);
       for(var k=2;k<=80;k++){(new Image).src='/video/frames/h'+('00'+k).slice(-3)+'.jpg'}
-    }else{img.src=s.replace(/\.mp4.*$/,'.jpg')}
+    }else{img.src=s.replace(/\.mp4.*$/,'.webp')}
   }
   function unfb(v){if(!v._fb)return;clearInterval(v._fbt);v._fb.remove();v._fb=null;v.style.display=''}
   vs.forEach(function(v){v.addEventListener('playing',function(){v._pl=1;unfb(v)})});
